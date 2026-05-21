@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Turismo no Brasil | Projeto G2</title>
+  <style>
+    :root {
+      --bg: #f7f9fc;
+      --ink: #152238;
+      --muted: #5d6b82;
+      --blue: #2563eb;
+      --green: #059669;
+      --amber: #d97706;
+      --line: #d9e1ee;
+      --panel: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.6;
+    }
+
+    header {
+      background: #0f1f3a;
+      color: #fff;
+      padding: 56px 24px 48px;
+    }
+
+    .wrap {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 480px);
+      gap: 40px;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      font-size: clamp(2.2rem, 5vw, 4.5rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 1.55rem;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 18px;
+    }
+
+    .lead {
+      max-width: 720px;
+      color: #d9e5f7;
+      font-size: 1.1rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 16px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .button.primary {
+      background: var(--blue);
+      border-color: var(--blue);
+    }
+
+    .preview {
+      background: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      border-radius: 8px;
+      padding: 18px;
+      color: var(--ink);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 12px;
+      background: #f8fbff;
+    }
+
+    .kpi span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .kpi strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 1rem;
+    }
+
+    .bars {
+      display: grid;
+      gap: 10px;
+    }
+
+    .bar {
+      display: grid;
+      grid-template-columns: 82px 1fr;
+      gap: 10px;
+      align-items: center;
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+
+    .track {
+      height: 14px;
+      border-radius: 999px;
+      background: #e8eef8;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    main {
+      padding: 44px 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .card strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--ink);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 26px 0;
+      color: var(--muted);
+    }
+
+    @media (max-width: 860px) {
+      .hero,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap hero">
+      <section>
+        <h1>Turismo no Brasil</h1>
+        <p class="lead">
+          Projeto analítico em Python para investigar fluxo turístico, sazonalidade,
+          diferenças regionais, ocupação hoteleira e impacto econômico entre 2015 e 2024.
+        </p>
+        <div class="actions">
+          <a class="button primary" href="COLE_AQUI_O_LINK_DO_STREAMLIT">Abrir dashboard</a>
+          <a class="button" href="COLE_AQUI_O_LINK_DO_REPOSITORIO">Ver código no GitHub</a>
+        </div>
+      </section>
+
+      <aside class="preview" aria-label="Prévia visual do dashboard">
+        <div class="kpi-grid">
+          <div class="kpi"><span>Turistas</span><strong>Visão geral</strong></div>
+          <div class="kpi"><span>Receita</span><strong>Impacto</strong></div>
+          <div class="kpi"><span>Hotelaria</span><strong>Ocupação</strong></div>
+        </div>
+        <div class="bars">
+          <div class="bar"><span>Sudeste</span><div class="track"><div class="fill" style="width: 92%; background: var(--blue);"></div></div></div>
+          <div class="bar"><span>Nordeste</span><div class="track"><div class="fill" style="width: 78%; background: var(--green);"></div></div></div>
+          <div class="bar"><span>Sul</span><div class="track"><div class="fill" style="width: 64%; background: var(--amber);"></div></div></div>
+          <div class="bar"><span>Norte</span><div class="track"><div class="fill" style="width: 48%; background: #0891b2;"></div></div></div>
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <h2>Entregas do projeto</h2>
+      <p class="muted">
+        O repositório contém o dashboard Streamlit, notebook de análise, base de dados,
+        README e esta página para publicação no GitHub Pages.
+      </p>
+
+      <section class="grid">
+        <article class="card">
+          <strong>Dashboard interativo</strong>
+          <p>Filtros por ano, mês, região, estado, cidade e temporada, com KPIs e gráficos em Plotly.</p>
+        </article>
+        <article class="card">
+          <strong>Análise exploratória</strong>
+          <p>Notebook com leitura da base, preparação dos dados, KPIs, visualizações e interpretação.</p>
+        </article>
+        <article class="card">
+          <strong>Conclusão executiva</strong>
+          <p>Síntese dos padrões encontrados para comunicar impacto econômico, sazonalidade e destinos relevantes.</p>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      Projeto G2 - Tema 18 | Turismo no Brasil | Desenvolvido com Python, Pandas, Plotly e Streamlit.
+    </div>
+  </footer>
+</body>
+</html>
