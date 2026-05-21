@@ -94,9 +94,9 @@ Entregas esperadas:
 
 Depois da publicação, atualize os links abaixo:
 
-- GitHub: `COLE_AQUI_O_LINK_DO_REPOSITORIO`
-- GitHub Pages: `COLE_AQUI_O_LINK_DO_GITHUB_PAGES`
-- Streamlit Cloud: `COLE_AQUI_O_LINK_DO_STREAMLIT`
+- GitHub: https://github.com/marianamachaddo/projeto-turismo-brasil
+- GitHub Pages: https://marianamachaddo.github.io/projeto-turismo-brasil/
+- Streamlit Cloud: https://projeto-turismo-brasil-qfkh4jgyfqitehy8nkcpez.streamlit.app/
 
 ## Conclusão
 
