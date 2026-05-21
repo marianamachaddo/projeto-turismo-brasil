@@ -1,3 +1,455 @@
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
+from plotly.subplots import make_subplots
+
+
+DATA_PATH = Path(__file__).parent / "dados" / "simulacao_turismo_brasil.csv"
+
+MESES = {
+    1: "Jan",
+    2: "Fev",
+    3: "Mar",
+    4: "Abr",
+    5: "Mai",
+    6: "Jun",
+    7: "Jul",
+    8: "Ago",
+    9: "Set",
+    10: "Out",
+    11: "Nov",
+    12: "Dez",
+}
+
+TEMPORADA_ORDEM = ["Baixa", "Média", "Alta"]
+CORES = ["#2563EB", "#059669", "#F59E0B", "#DC2626", "#7C3AED", "#0891B2"]
+
+
+st.set_page_config(
+    page_title="Turismo no Brasil",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+
+def formatar_inteiro(valor: float) -> str:
+    return f"{valor:,.0f}".replace(",", ".")
+
+
+def formatar_decimal(valor: float, casas: int = 2) -> str:
+    return f"{valor:,.{casas}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def formatar_moeda(valor: float) -> str:
+    if pd.isna(valor):
+        valor = 0
+
+    if abs(valor) >= 1_000_000_000:
+        return f"R$ {formatar_decimal(valor / 1_000_000_000)} bi"
+    if abs(valor) >= 1_000_000:
+        return f"R$ {formatar_decimal(valor / 1_000_000)} mi"
+    return f"R$ {formatar_decimal(valor)}"
+
+
+def formatar_percentual(valor: float) -> str:
+    if pd.isna(valor):
+        return "0,0%"
+    return f"{formatar_decimal(valor, 1)}%"
+
+
+@st.cache_data
+def carregar_dados(arquivo=None) -> pd.DataFrame:
+    origem = arquivo if arquivo is not None else DATA_PATH
+    df = pd.read_csv(origem)
+
+    colunas_obrigatorias = {
+        "ano",
+        "mes",
+        "data",
+        "regiao",
+        "uf",
+        "cidade",
+        "turistas",
+        "turistas_estrangeiros",
+        "ocupacao_hoteleira",
+        "gasto_medio",
+        "faturamento_turismo",
+        "eventos_realizados",
+        "temperatura_media",
+        "nivel_temporada",
+    }
+
+    colunas_ausentes = sorted(colunas_obrigatorias.difference(df.columns))
+    if colunas_ausentes:
+        raise ValueError(f"Colunas ausentes no dataset: {', '.join(colunas_ausentes)}")
+
+    df["data"] = pd.to_datetime(df["data"], errors="coerce")
+
+    numericas = [
+        "ano",
+        "mes",
+        "turistas",
+        "turistas_estrangeiros",
+        "ocupacao_hoteleira",
+        "gasto_medio",
+        "faturamento_turismo",
+        "eventos_realizados",
+        "temperatura_media",
+    ]
+    for coluna in numericas:
+        df[coluna] = pd.to_numeric(df[coluna], errors="coerce")
+
+    df = df.dropna(subset=["ano", "mes", "data", "turistas", "faturamento_turismo"])
+    df["ano"] = df["ano"].astype(int)
+    df["mes"] = df["mes"].astype(int)
+    df["mes_nome"] = df["mes"].map(MESES)
+    df["ano_mes"] = pd.to_datetime(
+        df["ano"].astype(str) + "-" + df["mes"].astype(str).str.zfill(2) + "-01"
+    )
+    df["participacao_estrangeiros"] = np.where(
+        df["turistas"] > 0,
+        df["turistas_estrangeiros"] / df["turistas"] * 100,
+        0,
+    )
+    df["receita_por_turista"] = np.where(
+        df["turistas"] > 0,
+        df["faturamento_turismo"] / df["turistas"],
+        0,
+    )
+    df["nivel_temporada"] = pd.Categorical(
+        df["nivel_temporada"], categories=TEMPORADA_ORDEM, ordered=True
+    )
+
+    return df.sort_values("data")
+
+
+def filtrar_dados(df: pd.DataFrame) -> pd.DataFrame:
+    st.sidebar.header("Filtros")
+
+    anos = sorted(df["ano"].unique())
+    anos_selecionados = st.sidebar.multiselect("Ano", anos, default=anos)
+
+    meses = sorted(df["mes"].unique())
+    meses_selecionados = st.sidebar.multiselect(
+        "Mês",
+        meses,
+        default=meses,
+        format_func=lambda mes: f"{mes:02d} - {MESES.get(mes, mes)}",
+    )
+
+    dados = df[df["ano"].isin(anos_selecionados) & df["mes"].isin(meses_selecionados)]
+
+    regioes = sorted(dados["regiao"].unique())
+    regioes_selecionadas = st.sidebar.multiselect("Região", regioes, default=regioes)
+    dados = dados[dados["regiao"].isin(regioes_selecionadas)]
+
+    estados = sorted(dados["uf"].unique())
+    estados_selecionados = st.sidebar.multiselect("Estado", estados, default=estados)
+    dados = dados[dados["uf"].isin(estados_selecionados)]
+
+    cidades = sorted(dados["cidade"].unique())
+    cidades_selecionadas = st.sidebar.multiselect("Cidade", cidades, default=cidades)
+    dados = dados[dados["cidade"].isin(cidades_selecionadas)]
+
+    temporadas = [temporada for temporada in TEMPORADA_ORDEM if temporada in dados["nivel_temporada"].astype(str).unique()]
+    temporadas_selecionadas = st.sidebar.multiselect(
+        "Nível de temporada", temporadas, default=temporadas
+    )
+    dados = dados[dados["nivel_temporada"].astype(str).isin(temporadas_selecionadas)]
+
+    return dados
+
+
+def calcular_kpis(dados: pd.DataFrame) -> dict:
+    total_turistas = dados["turistas"].sum()
+    receita_total = dados["faturamento_turismo"].sum()
+    ocupacao_media = dados["ocupacao_hoteleira"].mean()
+    gasto_medio = np.average(dados["gasto_medio"], weights=dados["turistas"]) if total_turistas else 0
+
+    cidade_ranking = dados.groupby("cidade", as_index=False)["turistas"].sum()
+    cidade_ranking = cidade_ranking.sort_values("turistas", ascending=False)
+    cidade_mais_visitada = cidade_ranking.iloc[0] if not cidade_ranking.empty else None
+
+    regiao_ranking = dados.groupby("regiao", as_index=False)["faturamento_turismo"].sum()
+    regiao_ranking = regiao_ranking.sort_values("faturamento_turismo", ascending=False)
+    regiao_mais_movimentada = regiao_ranking.iloc[0] if not regiao_ranking.empty else None
+
+    return {
+        "total_turistas": total_turistas,
+        "receita_total": receita_total,
+        "ocupacao_media": ocupacao_media,
+        "gasto_medio": gasto_medio,
+        "cidade_mais_visitada": cidade_mais_visitada,
+        "regiao_mais_movimentada": regiao_mais_movimentada,
+    }
+
+
+def mostrar_kpis(kpis: dict) -> None:
+    linha_1 = st.columns(3)
+    linha_1[0].metric("Total de turistas", formatar_inteiro(kpis["total_turistas"]))
+    linha_1[1].metric("Receita total do turismo", formatar_moeda(kpis["receita_total"]))
+    linha_1[2].metric("Ocupação hoteleira média", formatar_percentual(kpis["ocupacao_media"]))
+
+    cidade = kpis["cidade_mais_visitada"]
+    regiao = kpis["regiao_mais_movimentada"]
+
+    linha_2 = st.columns(3)
+    linha_2[0].metric(
+        "Cidade mais visitada",
+        cidade["cidade"] if cidade is not None else "-",
+        formatar_inteiro(cidade["turistas"]) if cidade is not None else None,
+    )
+    linha_2[1].metric("Gasto médio por turista", formatar_moeda(kpis["gasto_medio"]))
+    linha_2[2].metric(
+        "Região mais movimentada",
+        regiao["regiao"] if regiao is not None else "-",
+        formatar_moeda(regiao["faturamento_turismo"]) if regiao is not None else None,
+    )
+
+
+def texto_interpretativo(dados: pd.DataFrame, kpis: dict) -> str:
+    cidade = kpis["cidade_mais_visitada"]
+    regiao = kpis["regiao_mais_movimentada"]
+
+    mes_pico = (
+        dados.groupby("mes", as_index=False)["turistas"].sum().sort_values("turistas", ascending=False).iloc[0]
+    )
+    temporada_pico = (
+        dados.groupby("nivel_temporada", observed=True)["turistas"].sum().sort_values(ascending=False).index[0]
+    )
+    correlacao = dados[["turistas", "faturamento_turismo"]].corr().iloc[0, 1]
+
+    participacao_receita = 0
+    if regiao is not None and kpis["receita_total"] > 0:
+        participacao_receita = regiao["faturamento_turismo"] / kpis["receita_total"] * 100
+
+    return (
+        f"No recorte filtrado, o turismo movimentou **{formatar_inteiro(kpis['total_turistas'])} turistas** "
+        f"e gerou **{formatar_moeda(kpis['receita_total'])}** em faturamento. "
+        f"A cidade com maior fluxo foi **{cidade['cidade']}**, enquanto a região com maior receita foi "
+        f"**{regiao['regiao']}**, responsável por **{formatar_percentual(participacao_receita)}** do faturamento. "
+        f"O mês de maior movimento foi **{MESES.get(int(mes_pico['mes']), mes_pico['mes'])}**, "
+        f"e a categoria de temporada com maior volume foi **{temporada_pico}**. "
+        f"A correlação entre turistas e faturamento no recorte é **{formatar_decimal(correlacao, 2)}**, "
+        "indicando o quanto o volume de visitantes acompanha a receita turística."
+    )
+
+
+def grafico_temporal(dados: pd.DataFrame) -> go.Figure:
+    temporal = (
+        dados.groupby("ano_mes", as_index=False)
+        .agg(
+            turistas=("turistas", "sum"),
+            faturamento_turismo=("faturamento_turismo", "sum"),
+            ocupacao_hoteleira=("ocupacao_hoteleira", "mean"),
+        )
+        .sort_values("ano_mes")
+    )
+
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    fig.add_trace(
+        go.Scatter(
+            x=temporal["ano_mes"],
+            y=temporal["turistas"],
+            mode="lines+markers",
+            name="Turistas",
+            line=dict(color=CORES[0], width=3),
+        ),
+        secondary_y=False,
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=temporal["ano_mes"],
+            y=temporal["faturamento_turismo"],
+            mode="lines",
+            name="Faturamento",
+            line=dict(color=CORES[1], width=3),
+        ),
+        secondary_y=True,
+    )
+
+    fig.update_layout(
+        title="Evolução mensal de turistas e faturamento",
+        template="plotly_white",
+        hovermode="x unified",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    )
+    fig.update_yaxes(title_text="Turistas", secondary_y=False)
+    fig.update_yaxes(title_text="Faturamento (R$)", secondary_y=True)
+    fig.update_xaxes(title_text="Período")
+    return fig
+
+
+def grafico_regioes(dados: pd.DataFrame) -> go.Figure:
+    regioes = (
+        dados.groupby("regiao", as_index=False)
+        .agg(
+            turistas=("turistas", "sum"),
+            faturamento_turismo=("faturamento_turismo", "sum"),
+            ocupacao_hoteleira=("ocupacao_hoteleira", "mean"),
+        )
+        .sort_values("faturamento_turismo", ascending=False)
+    )
+    fig = px.bar(
+        regioes,
+        x="regiao",
+        y="faturamento_turismo",
+        color="turistas",
+        text="faturamento_turismo",
+        color_continuous_scale="Blues",
+        title="Faturamento turístico por região",
+        labels={
+            "regiao": "Região",
+            "faturamento_turismo": "Faturamento (R$)",
+            "turistas": "Turistas",
+        },
+    )
+    fig.update_traces(texttemplate="%{text:.2s}", textposition="outside")
+    fig.update_layout(template="plotly_white", coloraxis_colorbar_title="Turistas")
+    return fig
+
+
+def grafico_cidades(dados: pd.DataFrame, limite: int) -> go.Figure:
+    cidades = (
+        dados.groupby(["cidade", "uf", "regiao"], as_index=False)
+        .agg(turistas=("turistas", "sum"), faturamento_turismo=("faturamento_turismo", "sum"))
+        .sort_values("turistas", ascending=False)
+        .head(limite)
+        .sort_values("turistas")
+    )
+    fig = px.bar(
+        cidades,
+        x="turistas",
+        y="cidade",
+        color="regiao",
+        orientation="h",
+        text="turistas",
+        hover_data=["uf", "faturamento_turismo"],
+        color_discrete_sequence=CORES,
+        title=f"Top {limite} destinos por quantidade de turistas",
+        labels={"turistas": "Turistas", "cidade": "Cidade", "regiao": "Região"},
+    )
+    fig.update_traces(texttemplate="%{text:.2s}", textposition="outside")
+    fig.update_layout(template="plotly_white", yaxis_title="")
+    return fig
+
+
+def heatmap_sazonalidade(dados: pd.DataFrame) -> go.Figure:
+    sazonalidade = dados.pivot_table(
+        index="ano",
+        columns="mes",
+        values="turistas",
+        aggfunc="sum",
+        fill_value=0,
+    ).sort_index()
+    sazonalidade = sazonalidade.reindex(columns=range(1, 13), fill_value=0)
+    sazonalidade.columns = [MESES[mes] for mes in sazonalidade.columns]
+
+    fig = px.imshow(
+        sazonalidade,
+        aspect="auto",
+        color_continuous_scale="YlGnBu",
+        text_auto=".2s",
+        title="Heatmap mensal de turistas",
+        labels=dict(x="Mês", y="Ano", color="Turistas"),
+    )
+    fig.update_layout(template="plotly_white")
+    return fig
+
+
+def grafico_dispersao_receita(dados: pd.DataFrame) -> go.Figure:
+    base = (
+        dados.groupby(["cidade", "uf", "regiao"], as_index=False)
+        .agg(
+            turistas=("turistas", "sum"),
+            faturamento_turismo=("faturamento_turismo", "sum"),
+            ocupacao_hoteleira=("ocupacao_hoteleira", "mean"),
+            gasto_medio=("gasto_medio", "mean"),
+        )
+    )
+    fig = px.scatter(
+        base,
+        x="turistas",
+        y="faturamento_turismo",
+        size="ocupacao_hoteleira",
+        color="regiao",
+        hover_name="cidade",
+        hover_data=["uf", "gasto_medio"],
+        color_discrete_sequence=CORES,
+        title="Relação entre turistas e faturamento por destino",
+        labels={
+            "turistas": "Turistas",
+            "faturamento_turismo": "Faturamento (R$)",
+            "ocupacao_hoteleira": "Ocupação hoteleira média",
+            "regiao": "Região",
+        },
+    )
+    fig.update_layout(template="plotly_white")
+    return fig
+
+
+def grafico_clima(dados: pd.DataFrame) -> go.Figure:
+    fig = px.scatter(
+        dados,
+        x="temperatura_media",
+        y="turistas",
+        color="nivel_temporada",
+        size="eventos_realizados",
+        hover_data=["ano", "mes_nome", "cidade", "regiao"],
+        color_discrete_sequence=[CORES[3], CORES[2], CORES[1]],
+        title="Relação clima x turismo",
+        labels={
+            "temperatura_media": "Temperatura média (°C)",
+            "turistas": "Turistas",
+            "nivel_temporada": "Temporada",
+            "eventos_realizados": "Eventos realizados",
+        },
+    )
+    fig.update_layout(template="plotly_white")
+    return fig
+
+
+def grafico_ocupacao(dados: pd.DataFrame) -> go.Figure:
+    fig = px.box(
+        dados,
+        x="nivel_temporada",
+        y="ocupacao_hoteleira",
+        color="nivel_temporada",
+        category_orders={"nivel_temporada": TEMPORADA_ORDEM},
+        color_discrete_sequence=[CORES[3], CORES[2], CORES[1]],
+        title="Distribuição da ocupação hoteleira por temporada",
+        labels={"nivel_temporada": "Temporada", "ocupacao_hoteleira": "Ocupação hoteleira (%)"},
+    )
+    fig.update_layout(template="plotly_white", showlegend=False)
+    return fig
+
+
+def grafico_temporada(dados: pd.DataFrame) -> go.Figure:
+    temporada = (
+        dados.groupby("nivel_temporada", observed=True, as_index=False)
+        .agg(turistas=("turistas", "sum"), faturamento_turismo=("faturamento_turismo", "sum"))
+        .sort_values("nivel_temporada")
+    )
+    fig = px.bar(
+        temporada,
+        x="nivel_temporada",
+        y="turistas",
+        color="nivel_temporada",
+        text="turistas",
+        category_orders={"nivel_temporada": TEMPORADA_ORDEM},
+        color_discrete_sequence=[CORES[3], CORES[2], CORES[1]],
+        title="Volume de turistas por nível de temporada",
+        labels={"nivel_temporada": "Temporada", "turistas": "Turistas"},
+    )
+    fig.update_traces(texttemplate="%{text:.2s}", textposition="outside")
+    fig.update_layout(template="plotly_white", showlegend=False)
+    return fig
+
 
 def grafico_crescimento(dados: pd.DataFrame) -> go.Figure | None:
     anos = sorted(dados["ano"].unique())
