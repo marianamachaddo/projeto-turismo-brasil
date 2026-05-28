@@ -86,13 +86,7 @@ http://localhost:8501
 
 ## Publicação
 
-Entregas esperadas:
-
-- GitHub: publique este projeto em um repositório.
-- GitHub Pages: use o arquivo `index.html` como página inicial do projeto.
-- Streamlit Cloud: publique o dashboard apontando para `app.py`.
-
-Depois da publicação, atualize os links abaixo:
+Entregas neste repositorio:
 
 - GitHub: https://github.com/marianamachaddo/projeto-turismo-brasil
 - GitHub Pages: https://marianamachaddo.github.io/projeto-turismo-brasil/
