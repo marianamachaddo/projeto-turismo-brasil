@@ -93,9 +93,13 @@ def carregar_dados(arquivo=None) -> tuple[pd.DataFrame, str]:
         df = pd.read_csv(arquivo)
         fonte = "CSV enviado pelo usuario"
     elif DATABASE_PATH.exists():
-        with sqlite3.connect(DATABASE_PATH) as conexao:
-            df = pd.read_sql_query("SELECT * FROM turismo_brasil", conexao)
-        fonte = "SQLite (database/turismo.db)"
+        try:
+            with sqlite3.connect(DATABASE_PATH) as conexao:
+                df = pd.read_sql_query("SELECT * FROM turismo_brasil", conexao)
+            fonte = "SQLite (database/turismo.db)"
+        except (sqlite3.DatabaseError, pd.errors.DatabaseError):
+            df = pd.read_csv(DATA_PATH)
+            fonte = "CSV (SQLite indisponivel no ambiente online)"
     else:
         df = pd.read_csv(DATA_PATH)
         fonte = "CSV (dados/simulacao_turismo_brasil.csv)"
