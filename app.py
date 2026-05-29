@@ -1,4 +1,5 @@
 from pathlib import Path
+import sqlite3
 
 import numpy as np
 import pandas as pd
@@ -9,6 +10,7 @@ from plotly.subplots import make_subplots
 
 
 DATA_PATH = Path(__file__).parent / "dados" / "simulacao_turismo_brasil.csv"
+DATABASE_PATH = Path(__file__).parent / "database" / "turismo.db"
 
 MESES = {
     1: "Jan",
@@ -56,16 +58,47 @@ def formatar_moeda(valor: float) -> str:
     return f"R$ {formatar_decimal(valor)}"
 
 
+def formatar_moeda_curta(valor: float) -> str:
+    if pd.isna(valor):
+        valor = 0
+
+    if abs(valor) >= 1_000_000_000:
+        return f"R$ {formatar_decimal(valor / 1_000_000_000, 0)} bi"
+    if abs(valor) >= 1_000_000:
+        return f"R$ {formatar_decimal(valor / 1_000_000, 0)} mi"
+    if abs(valor) >= 1_000:
+        return f"R$ {formatar_decimal(valor / 1_000, 0)} mil"
+    return f"R$ {formatar_decimal(valor, 0)}"
+
+
 def formatar_percentual(valor: float) -> str:
     if pd.isna(valor):
         return "0,0%"
     return f"{formatar_decimal(valor, 1)}%"
 
 
+def ticks_moeda(valores: pd.Series) -> tuple[np.ndarray, list[str]]:
+    valor_maximo = valores.max()
+    if pd.isna(valor_maximo) or valor_maximo <= 0:
+        return np.array([0]), [formatar_moeda_curta(0)]
+
+    tickvals = np.linspace(0, valor_maximo, 5)
+    ticktext = [formatar_moeda_curta(valor) for valor in tickvals]
+    return tickvals, ticktext
+
+
 @st.cache_data
-def carregar_dados(arquivo=None) -> pd.DataFrame:
-    origem = arquivo if arquivo is not None else DATA_PATH
-    df = pd.read_csv(origem)
+def carregar_dados(arquivo=None) -> tuple[pd.DataFrame, str]:
+    if arquivo is not None:
+        df = pd.read_csv(arquivo)
+        fonte = "CSV enviado pelo usuario"
+    elif DATABASE_PATH.exists():
+        with sqlite3.connect(DATABASE_PATH) as conexao:
+            df = pd.read_sql_query("SELECT * FROM turismo_brasil", conexao)
+        fonte = "SQLite (database/turismo.db)"
+    else:
+        df = pd.read_csv(DATA_PATH)
+        fonte = "CSV (dados/simulacao_turismo_brasil.csv)"
 
     colunas_obrigatorias = {
         "ano",
@@ -125,7 +158,7 @@ def carregar_dados(arquivo=None) -> pd.DataFrame:
         df["nivel_temporada"], categories=TEMPORADA_ORDEM, ordered=True
     )
 
-    return df.sort_values("data")
+    return df.sort_values("data"), fonte
 
 
 def filtrar_dados(df: pd.DataFrame) -> pd.DataFrame:
@@ -279,8 +312,14 @@ def grafico_temporal(dados: pd.DataFrame) -> go.Figure:
         hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
+    tickvals_receita, ticktext_receita = ticks_moeda(temporal["faturamento_turismo"])
     fig.update_yaxes(title_text="Turistas", secondary_y=False)
-    fig.update_yaxes(title_text="Faturamento (R$)", secondary_y=True)
+    fig.update_yaxes(
+        title_text="Faturamento",
+        tickvals=tickvals_receita,
+        ticktext=ticktext_receita,
+        secondary_y=True,
+    )
     fig.update_xaxes(title_text="Período")
     return fig
 
@@ -295,22 +334,39 @@ def grafico_regioes(dados: pd.DataFrame) -> go.Figure:
         )
         .sort_values("faturamento_turismo", ascending=False)
     )
+    regioes["faturamento_label"] = regioes["faturamento_turismo"].apply(formatar_moeda_curta)
+    regioes["turistas_label"] = regioes["turistas"].apply(formatar_inteiro)
+    regioes["ocupacao_label"] = regioes["ocupacao_hoteleira"].apply(formatar_percentual)
+
     fig = px.bar(
         regioes,
         x="regiao",
         y="faturamento_turismo",
         color="turistas",
-        text="faturamento_turismo",
+        text="faturamento_label",
+        custom_data=["faturamento_label", "turistas_label", "ocupacao_label"],
         color_continuous_scale="Blues",
         title="Faturamento turístico por região",
         labels={
             "regiao": "Região",
-            "faturamento_turismo": "Faturamento (R$)",
+            "faturamento_turismo": "Faturamento",
             "turistas": "Turistas",
         },
     )
-    fig.update_traces(texttemplate="%{text:.2s}", textposition="outside")
+    tickvals, ticktext = ticks_moeda(regioes["faturamento_turismo"])
+    fig.update_traces(
+        texttemplate="%{text}",
+        textposition="outside",
+        hovertemplate=(
+            "<b>%{x}</b><br>"
+            "Faturamento: %{customdata[0]}<br>"
+            "Turistas: %{customdata[1]}<br>"
+            "Ocupação média: %{customdata[2]}"
+            "<extra></extra>"
+        ),
+    )
     fig.update_layout(template="plotly_white", coloraxis_colorbar_title="Turistas")
+    fig.update_yaxes(tickvals=tickvals, ticktext=ticktext)
     return fig
 
 
@@ -389,7 +445,9 @@ def grafico_dispersao_receita(dados: pd.DataFrame) -> go.Figure:
             "regiao": "Região",
         },
     )
+    tickvals, ticktext = ticks_moeda(base["faturamento_turismo"])
     fig.update_layout(template="plotly_white")
+    fig.update_yaxes(tickvals=tickvals, ticktext=ticktext)
     return fig
 
 
@@ -531,10 +589,12 @@ st.markdown(
 arquivo_enviado = st.sidebar.file_uploader("Carregar outro CSV", type=["csv"])
 
 try:
-    df_original = carregar_dados(arquivo_enviado)
+    df_original, fonte_dados = carregar_dados(arquivo_enviado)
 except Exception as erro:
     st.error(f"Não foi possível carregar a base de dados: {erro}")
     st.stop()
+
+st.caption(f"Fonte dos dados: {fonte_dados}")
 
 dados = filtrar_dados(df_original)
 
