@@ -1,37 +1,44 @@
 # Turismo no Brasil - Projeto G2
 
-Projeto de análise e visualização de dados sobre turismo no Brasil entre 2015 e 2024.
+Projeto de analise e visualizacao de dados sobre turismo no Brasil entre 2015 e 2024.
 
-O trabalho utiliza Python, Pandas, Plotly e Streamlit para investigar fluxo turístico, sazonalidade, comparação regional, ocupação hoteleira e impacto econômico.
+O trabalho utiliza Python, Pandas, Plotly e Streamlit para investigar fluxo turistico, sazonalidade, comparacao regional, ocupacao hoteleira e impacto economico.
+
+## Links do Projeto
+
+- GitHub: https://github.com/marianamachaddo/projeto-turismo-brasil
+- GitHub Pages: https://marianamachaddo.github.io/projeto-turismo-brasil/
+- Streamlit Cloud: https://projeto-turismo-brasil-h9l2mopjby4iqy5izsjvak.streamlit.app/
 
 ## Objetivos
 
 - Identificar cidades mais visitadas.
-- Analisar sazonalidade turística.
-- Comparar regiões e estados.
-- Investigar faturamento turístico e gasto médio.
-- Avaliar ocupação hoteleira.
+- Analisar sazonalidade turistica.
+- Comparar regioes e estados.
+- Investigar faturamento turistico e gasto medio.
+- Avaliar ocupacao hoteleira.
 - Construir um dashboard interativo.
 
 ## Estrutura
 
 ```text
 projeto-turismo-brasil/
-├── app.py
-├── requirements.txt
-├── README.md
-├── index.html
-├── dados/
-│   └── simulacao_turismo_brasil.csv
-├── notebooks/
-│   └── analise_turismo.ipynb
-├── database/
-└── imagens/
+|-- app.py
+|-- requirements.txt
+|-- README.md
+|-- index.html
+|-- dados/
+|   |-- simulacao_turismo_brasil.csv
+|-- notebooks/
+|   |-- analise_turismo.ipynb
+|-- database/
+|   |-- turismo.db
+|-- imagens/
 ```
 
 ## Dataset
 
-A base `simulacao_turismo_brasil.csv` contém dados simulados de turismo no Brasil, com registros por ano, mês, região, estado e cidade.
+A base `simulacao_turismo_brasil.csv` contem dados simulados de turismo no Brasil, com registros por ano, mes, regiao, estado e cidade.
 
 Principais colunas:
 
@@ -44,29 +51,31 @@ Principais colunas:
 - `temperatura_media`
 - `nivel_temporada`
 
+Tambem foi gerado o arquivo `database/turismo.db`, com a tabela `turismo_brasil`, para incluir persistencia em SQLite como recurso avancado.
+
 ## Funcionalidades do Dashboard
 
 - KPIs principais:
   - Total de turistas
   - Cidade mais visitada
   - Receita total do turismo
-  - Ocupação hoteleira média
-  - Gasto médio por turista
-  - Região mais movimentada
-- Filtros por ano, mês, região, estado, cidade e nível de temporada.
-- Gráfico temporal de turistas e faturamento.
-- Comparação por região.
-- Ranking de destinos turísticos.
+  - Ocupacao hoteleira media
+  - Gasto medio por turista
+  - Regiao mais movimentada
+- Filtros por ano, mes, regiao, estado, cidade e nivel de temporada.
+- Grafico temporal de turistas e faturamento.
+- Comparacao por regiao.
+- Ranking de destinos turisticos.
 - Heatmap mensal de sazonalidade.
-- Dispersão entre turistas e faturamento.
-- Análise de clima, eventos e turismo.
-- Tabela dinâmica para exploração detalhada.
-- Interpretação textual e conclusão executiva.
+- Dispersao entre turistas e faturamento.
+- Analise de clima, eventos e turismo.
+- Tabela dinamica para exploracao detalhada.
+- Interpretacao textual e conclusao executiva.
 
 ## Como Executar Localmente
 
-1. Clone ou baixe este repositório.
-2. Instale as dependências:
+1. Clone ou baixe este repositorio.
+2. Instale as dependencias:
 
 ```bash
 pip install -r requirements.txt
@@ -78,20 +87,20 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-4. Acesse o endereço exibido no terminal, geralmente:
+4. Acesse o endereco exibido no terminal, geralmente:
 
 ```text
 http://localhost:8501
 ```
 
-## Publicação
+## Publicacao
 
-Entregas neste repositorio:
+Este projeto foi organizado para publicacao em:
 
-- GitHub: https://github.com/marianamachaddo/projeto-turismo-brasil
-- GitHub Pages: https://marianamachaddo.github.io/projeto-turismo-brasil/
-- Streamlit Cloud: https://projeto-turismo-brasil-qfkh4jgyfqitehy8nkcpez.streamlit.app/
+- GitHub, para codigo-fonte e base de dados.
+- GitHub Pages, usando o arquivo `index.html`.
+- Streamlit Cloud, usando o arquivo principal `app.py`.
 
-## Conclusão
+## Conclusao
 
-O projeto mostra como a análise de dados pode apoiar a compreensão de padrões turísticos, diferenças regionais, períodos de alta temporada e impactos econômicos. O dashboard permite transformar a base simulada em informações úteis para planejamento, gestão pública, infraestrutura e serviços.
+O projeto mostra como a analise de dados pode apoiar a compreensao de padroes turisticos, diferencas regionais, periodos de alta temporada e impactos economicos. O dashboard permite transformar a base simulada em informacoes uteis para planejamento, gestao publica, infraestrutura e servicos.
