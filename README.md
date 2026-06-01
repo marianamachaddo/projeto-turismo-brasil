@@ -1,7 +1,9 @@
 # Turismo no Brasil - Projeto G2
 
 Projeto desenvolvido por Mariana Machado Macedo. 
+
 Disciplina: Linguagem de Programação. 
+
 Professor: Alexandre Neves Louzada. 
 
 Projeto de analise e visualizacao de dados sobre turismo no Brasil entre 2015 e 2024.
