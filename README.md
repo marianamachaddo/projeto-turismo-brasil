@@ -68,7 +68,7 @@ Tambem foi gerado o arquivo `database/turismo.db`, com a tabela `turismo_brasil`
   - Ocupacao hoteleira media
   - Gasto medio por turista
   - Regiao mais movimentada
-- Filtros por ano, mes, regiao, estado, cidade e nivel de temporada.
+- Filtros por ano, mês, região, estado, cidade e nível de temporada.
 - Grafico temporal de turistas e faturamento.
 - Comparacao por regiao.
 - Ranking de destinos turisticos.
@@ -80,4 +80,4 @@ Tambem foi gerado o arquivo `database/turismo.db`, com a tabela `turismo_brasil`
 
 ## Conclusão
 
-O projeto mostra como a analise de dados pode apoiar a compreensao de padroes turisticos, diferencas regionais, periodos de alta temporada e impactos economicos. O dashboard permite transformar a base simulada em informacoes uteis para planejamento, gestao publica, infraestrutura e servicos.
+O projeto demonstra como a análise de dados pode apoiar a compreensão dos padrões turísticos, das diferenças regionais, dos períodos de alta temporada e dos impactos econômicos do setor. O dashboard permite transformar uma base de dados simulada em informações relevantes para planejamento estratégico, gestão pública, infraestrutura e desenvolvimento de serviços turísticos.
