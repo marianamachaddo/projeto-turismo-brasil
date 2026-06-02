@@ -78,28 +78,7 @@ Tambem foi gerado o arquivo `database/turismo.db`, com a tabela `turismo_brasil`
 - Tabela dinamica para exploracao detalhada.
 - Interpretacao textual e conclusao executiva.
 
-## Como Executar Localmente
-
-1. Clone ou baixe este repositorio.
-2. Instale as dependencias:
-
-```bash
-pip install -r requirements.txt
-```
-
-3. Execute o dashboard:
-
-```bash
-streamlit run app.py
-```
-
-4. Acesse o endereco exibido no terminal, geralmente:
-
-```text
-http://localhost:8501
-```
-
-## Publicacao
+## Publicação
 
 Este projeto foi organizado para publicacao em:
 
@@ -107,6 +86,6 @@ Este projeto foi organizado para publicacao em:
 - GitHub Pages, usando o arquivo `index.html`.
 - Streamlit Cloud, usando o arquivo principal `app.py`.
 
-## Conclusao
+## Conclusão
 
 O projeto mostra como a analise de dados pode apoiar a compreensao de padroes turisticos, diferencas regionais, periodos de alta temporada e impactos economicos. O dashboard permite transformar a base simulada em informacoes uteis para planejamento, gestao publica, infraestrutura e servicos.
